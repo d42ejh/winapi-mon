@@ -1,4 +1,4 @@
-use crate::declare_init_hook;
+use crate::{declare_init_hook, get_detour};
 use anyhow::Result;
 use detour::{static_detour, Error, GenericDetour, RawDetour, StaticDetour};
 use lazy_static::lazy_static;
@@ -6,6 +6,7 @@ use nameof::name_of;
 use std::iter::Once;
 use std::lazy::SyncOnceCell;
 use std::sync::Mutex;
+use std::sync::{Arc, RwLock};
 use tracing::{event, Level};
 use winapi::shared::basetsd::SIZE_T;
 use winapi::shared::minwindef::{
@@ -15,11 +16,14 @@ use winapi::shared::ntdef::NULL;
 use winapi::um::libloaderapi::{LoadLibraryA, LoadLibraryW};
 use winapi::um::minwinbase::LPOVERLAPPED;
 use winapi::um::winnt::{LPCSTR, LPCWSTR};
+
 type FnLoadLibraryA = extern "system" fn(LPCSTR) -> HMODULE;
 type FnLoadLibraryW = extern "system" fn(LPCWSTR) -> HMODULE;
 
-static LoadLibraryADetour: SyncOnceCell<GenericDetour<FnLoadLibraryA>> = SyncOnceCell::new();
-static LoadLibraryWDetour: SyncOnceCell<GenericDetour<FnLoadLibraryW>> = SyncOnceCell::new();
+static LoadLibraryADetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnLoadLibraryA>>>> =
+    SyncOnceCell::new();
+static LoadLibraryWDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnLoadLibraryW>>>> =
+    SyncOnceCell::new();
 
 declare_init_hook!(
     hook_LoadLibraryA,
@@ -40,30 +44,11 @@ pub extern "system" fn __hook__LoadLibraryA(lpFileName: LPCSTR) -> HMODULE {
         file_name
     );
     // call trampoline
-    match &LoadLibraryADetour.get() {
-        Some(f) => unsafe { f.call(lpFileName) },
-        None => unreachable!(),
-    }
+
+    let f = get_detour!(LoadLibraryADetour);
+
+    unsafe { f.call(lpFileName) }
 }
-/* old code
-pub fn hook_LoadLibraryW() -> Result<()> {
-    let opt = get_module_symbol_address("kernel32", name_of!(LoadLibraryW))?;
-    if opt.is_none() {}
-    let address = opt.unwrap();
-    let target: FnLoadLibraryW = unsafe { std::mem::transmute(address) }; //equivalent to c style cast or reinterpret_cast<>
-
-    //init once cell
-    let detour = unsafe { GenericDetour::<FnLoadLibraryW>::new(target, __hook__LoadLibraryW) }?;
-    unsafe { detour.enable()? };
-
-    let set_result = LoadLibraryWDetour.set(detour);
-    if set_result.is_err() {
-        return Err(anyhow::Error::msg("Failed to initialize once cell."));
-    }
-
-    Ok(())
-}
-*/
 
 declare_init_hook!(
     hook_LoadLibraryW,
@@ -85,8 +70,7 @@ pub extern "system" fn __hook__LoadLibraryW(lpFileName: LPCWSTR) -> HMODULE {
         unsafe { U16Str::from_ptr(lpFileName, lstrlenW(lpFileName) as usize) }
     );
     // call trampoline
-    match &LoadLibraryWDetour.get() {
-        Some(f) => unsafe { f.call(lpFileName) },
-        None => std::ptr::null_mut(),
-    }
+    let f = get_detour!(LoadLibraryWDetour);
+
+    unsafe { f.call(lpFileName) }
 }

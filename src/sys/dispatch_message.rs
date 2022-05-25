@@ -1,8 +1,9 @@
-use crate::declare_init_hook;
+use crate::{declare_init_hook, get_detour};
 use anyhow::Result;
 use detour::{static_detour, Error, GenericDetour, RawDetour, StaticDetour};
 use nameof::name_of;
 use std::lazy::SyncOnceCell;
+use std::sync::{Arc, RwLock};
 use tracing::{event, Level};
 use winapi::shared::basetsd::SIZE_T;
 use winapi::shared::minwindef::{
@@ -10,10 +11,12 @@ use winapi::shared::minwindef::{
 };
 use winapi::um::winnt::{HANDLE, LPCSTR, LPSTR};
 use winapi::um::winuser::{DispatchMessageW, MSG};
+
 //only W is implemented
 
 type FnDispatchMessageW = extern "system" fn(*const MSG) -> LRESULT;
-static DispatchMessageWDetour: SyncOnceCell<GenericDetour<FnDispatchMessageW>> =
+
+static DispatchMessageWDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnDispatchMessageW>>>> =
     SyncOnceCell::new();
 
 declare_init_hook!(
@@ -28,8 +31,7 @@ declare_init_hook!(
 extern "system" fn __hook__DispatchMessageW(lpmsg: *const MSG) -> LRESULT {
     event!(Level::INFO, "[{}] {:?}", name_of!(DispatchMessageW), lpmsg);
     // call trampoline
-    match &DispatchMessageWDetour.get() {
-        Some(f) => unsafe { f.call(lpmsg) },
-        None => unreachable!(),
-    }
+    let f = get_detour!(DispatchMessageWDetour);
+
+    unsafe { f.call(lpmsg) }
 }

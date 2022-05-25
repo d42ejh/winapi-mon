@@ -1,8 +1,9 @@
-use crate::declare_init_hook;
+use crate::{declare_init_hook, get_detour};
 use anyhow::Result;
 use detour::{static_detour, Error, GenericDetour, RawDetour, StaticDetour};
 use nameof::name_of;
 use std::lazy::SyncOnceCell;
+use std::sync::{Arc, RwLock};
 use tracing::{event, Level};
 use winapi::shared::basetsd::SIZE_T;
 use winapi::shared::minwindef::{
@@ -14,7 +15,7 @@ use winapi::um::winnt::{HANDLE, LPCSTR, LPSTR, VOID};
 //only Sleep is implemented, not Ex
 
 type FnSleep = extern "system" fn(DWORD) -> VOID;
-static SleepDetour: SyncOnceCell<GenericDetour<FnSleep>> = SyncOnceCell::new();
+static SleepDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnSleep>>>> = SyncOnceCell::new();
 
 declare_init_hook!(
     hook_Sleep,
@@ -33,8 +34,7 @@ extern "system" fn __hook__Sleep(dwMilliseconds: DWORD) -> VOID {
         dwMilliseconds
     );
     // call trampoline
-    match &SleepDetour.get() {
-        Some(f) => unsafe { f.call(dwMilliseconds) },
-        None => unreachable!(),
-    }
+    let f = get_detour!(SleepDetour);
+
+    unsafe { f.call(dwMilliseconds) }
 }

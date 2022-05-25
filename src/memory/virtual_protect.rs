@@ -1,22 +1,23 @@
-use crate::declare_init_hook;
 use crate::utility::get_module_proc_address;
+use crate::{declare_init_hook, get_detour};
 use anyhow::Result;
 use detour::{Error, GenericDetour};
 use nameof::name_of;
 use std::lazy::SyncOnceCell;
+use std::sync::{Arc, RwLock};
 use tracing::{event, Level};
 use winapi::shared::basetsd::SIZE_T;
 use winapi::shared::minwindef::{BOOL, DWORD, FALSE, LPVOID, PDWORD, TRUE};
 use winapi::um::memoryapi::VirtualProtect;
 use winapi::um::minwinbase::LPOVERLAPPED;
 
-
 type FnVirtualProtect = extern "system" fn(LPVOID, SIZE_T, DWORD, PDWORD) -> BOOL;
 
 //new codes
-// somehow VirtualProtect with SyncOnceCell cause wierd panic!.
+// somehow VirtualProtect with SyncOnceCell cause wierd panic(possibly because of anti cheat shit).
+static VirtualProtectDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnVirtualProtect>>>> =
+    SyncOnceCell::new();
 
-static VirtualProtectDetour: SyncOnceCell<GenericDetour<FnVirtualProtect>> = SyncOnceCell::new();
 declare_init_hook!(
     hook_VirtualProtect,
     FnVirtualProtect,
@@ -25,7 +26,10 @@ declare_init_hook!(
     name_of!(VirtualProtect),
     __hook__VirtualProtect
 );
+
+
 /*
+//old codes, todo remove this if new code is fine.
 pub fn hook_VirtualProtect() -> Result<()> {
     let opt = get_module_symbol_address("kernel32", name_of!(VirtualProtect))?;
     if opt.is_none() {}
@@ -83,7 +87,7 @@ pub extern "system" fn __hook__VirtualProtect(
 }
  */
 
- /* 
+/*
 static mut VirtualProtectDetour: Result<GenericDetour<FnVirtualProtect>, Error> =
     Err(Error::NotInitialized);
 
@@ -130,13 +134,9 @@ pub extern "system" fn __hook__VirtualProtect(
         page_guard_to_str(unsafe { *lpflOldProtect })
     );
     // call trampoline
-        match &VirtualProtectDetour.get() {
-            Some(f) => {
-                unsafe{ f.call(lpAddress, dwSize, flNewProtect, lpflOldProtect) }
-            }
-            None => FALSE,
-        }
-    
+    let f = get_detour!(VirtualProtectDetour);
+
+    unsafe { f.call(lpAddress, dwSize, flNewProtect, lpflOldProtect) }
 }
 
 #[must_use]

@@ -1,37 +1,17 @@
-use crate::declare_init_hook;
+use crate::{declare_init_hook, get_detour};
 use anyhow::Result;
 use detour::{static_detour, Error, GenericDetour, RawDetour, StaticDetour};
 use nameof::name_of;
-use std::lazy::SyncOnceCell;
+use std::lazy::{SyncLazy, SyncOnceCell};
+use std::sync::{Arc, RwLock};
 use tracing::{event, Level};
 use winapi::shared::minwindef::{BOOL, DWORD, FALSE, HINSTANCE, LPDWORD, LPVOID, TRUE};
 use winapi::um::fileapi::ReadFile;
-use winapi::um::memoryapi::VirtualProtect;
 use winapi::um::minwinbase::LPOVERLAPPED;
 use winapi::um::winnt::HANDLE;
-
 type FnReadFile = extern "system" fn(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED) -> BOOL;
 
-static ReadFileDetour: SyncOnceCell<GenericDetour<FnReadFile>> = SyncOnceCell::new();
-
-/* old code
-pub fn hook_ReadFile() -> Result<()> {
-    let opt = get_module_symbol_address("kernel32", "ReadFile")?;
-    if opt.is_none() {}
-    let address = opt.unwrap();
-    let target: FnReadFile = unsafe { std::mem::transmute(address) }; //equivalent to c style cast or reinterpret_cast<>
-
-    //init once cell
-    let detour = unsafe { GenericDetour::<FnReadFile>::new(target, __hook__ReadFile) }?;
-    unsafe { detour.enable()? };
-
-    let set_result = ReadFileDetour.set(detour);
-    if set_result.is_err() {
-        return Err(anyhow::Error::msg("Failed to initialize once cell."));
-    }
-    Ok(())
-}
-*/
+static ReadFileDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnReadFile>>>> = SyncOnceCell::new();
 declare_init_hook!(
     hook_ReadFile,
     FnReadFile,
@@ -60,16 +40,15 @@ pub extern "system" fn __hook__ReadFile(
     );
 
     // call trampoline
-    match &ReadFileDetour.get() {
-        Some(f) => unsafe {
-            f.call(
-                hFile,
-                lpBuffer,
-                nNumberOfBytesToRead,
-                lpNumberOfBytesRead,
-                lpOverlapped,
-            )
-        },
-        None => unreachable!(),
+    let f = get_detour!(ReadFileDetour);
+
+    unsafe {
+        f.call(
+            hFile,
+            lpBuffer,
+            nNumberOfBytesToRead,
+            lpNumberOfBytesRead,
+            lpOverlapped,
+        )
     }
 }
