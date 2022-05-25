@@ -26,7 +26,10 @@ declare_init_hook!(
     name_of!(VirtualProtect),
     __hook__VirtualProtect
 );
+
+
 /*
+//old codes, todo remove this if new code is fine.
 pub fn hook_VirtualProtect() -> Result<()> {
     let opt = get_module_symbol_address("kernel32", name_of!(VirtualProtect))?;
     if opt.is_none() {}
