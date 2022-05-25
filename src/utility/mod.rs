@@ -1,22 +1,22 @@
 use anyhow::Result;
 use detour::{static_detour, Error, GenericDetour, RawDetour, StaticDetour};
 use nameof::name_of;
+use std::ffi::CString;
 use std::lazy::SyncOnceCell;
 use tracing::{event, Level};
 use winapi::shared::minwindef::{BOOL, DWORD, FALSE, HINSTANCE, LPDWORD, LPVOID, TRUE};
 use winapi::um::fileapi::{GetFinalPathNameByHandleA, GetFinalPathNameByHandleW};
+use winapi::um::libloaderapi::{GetModuleHandleW, GetProcAddress};
 use winapi::um::memoryapi::VirtualProtect;
 use winapi::um::minwinbase::LPOVERLAPPED;
 use winapi::um::winnt::{HANDLE, LPCSTR, LPSTR};
-use std::ffi::CString;
-use winapi::um::libloaderapi::{GetModuleHandleW, GetProcAddress};
-
 
 //https://doc.rust-lang.org/book/ch19-06-macros.html
+
 #[macro_export]
 macro_rules! declare_init_hook {
     ($func_name:ident,$target_func_type:ty, $sync_once_cell_detour:expr,$module_name:expr,$func_symbol:expr,$hook_func:expr) => {
-        pub fn $func_name() -> Result<()> {
+        pub fn $func_name() -> Result<Arc<RwLock<GenericDetour<$target_func_type>>>> {
             use crate::utility::get_module_proc_address;
             event!(
                 Level::INFO,
@@ -41,7 +41,9 @@ macro_rules! declare_init_hook {
             let detour = unsafe { GenericDetour::<$target_func_type>::new(target, $hook_func) }?;
             unsafe { detour.enable()? };
 
-            let set_result = $sync_once_cell_detour.set(detour);
+            let detour = Arc::new(RwLock::new(detour));
+
+            let set_result = $sync_once_cell_detour.set(detour.clone());
             if set_result.is_err() {
                 event!(Level::INFO, "SyncOnceCell error!");
                 return Err(anyhow::Error::msg("Failed to initialize once cell."));
@@ -49,11 +51,23 @@ macro_rules! declare_init_hook {
             assert!($sync_once_cell_detour.get().is_some()); //must
 
             event!(Level::INFO, "Hooked...");
-            Ok(())
+            Ok(detour)
         }
     };
 }
 
+#[macro_export]
+macro_rules! get_detour {
+    ($detour_sync_once_cell:expr) => {
+        match &$detour_sync_once_cell.get() {
+            Some(detour) => unsafe { detour.read().unwrap() },
+            None => {
+                event!(Level::ERROR, "Should not happen");
+                unreachable!()
+            }
+        }
+    };
+}
 
 /// Get module::symbol's address
 //wchar_t == u16
@@ -69,7 +83,6 @@ pub fn get_module_proc_address(module: &str, symbol: &str) -> Result<Option<usiz
         n => Ok(Some(n)),
     }
 }
-
 
 #[must_use]
 fn get_module_handle(module: &str) -> Result<HINSTANCE> {
