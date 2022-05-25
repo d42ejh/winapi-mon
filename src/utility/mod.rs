@@ -60,7 +60,7 @@ macro_rules! declare_init_hook {
 macro_rules! get_detour {
     ($detour_sync_once_cell:expr) => {
         match &$detour_sync_once_cell.get() {
-            Some(detour) => unsafe { detour.read().unwrap() },
+            Some(detour) => detour.read().unwrap(),
             None => {
                 event!(Level::ERROR, "Should not happen");
                 unreachable!()
