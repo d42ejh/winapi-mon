@@ -1,0 +1,7 @@
+# https://github.com/rust-lang/cargo/pull/10473
+
+[unstable]
+multitarget = true
+
+[build]
+target=["i686-pc-windows-msvc","x86_64-pc-windows-msvc"]
