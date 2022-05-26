@@ -53,7 +53,6 @@ macro_rules! declare_init_hook {
                 event!(Level::INFO, "Use default hook for {}", $func_symbol);
                 detour = unsafe { GenericDetour::<$target_func_type>::new(target, $hook_func) }?;
             }
-            unsafe { detour.enable()? };
 
             let detour = Arc::new(RwLock::new(detour));
 
