@@ -42,8 +42,15 @@ macro_rules! declare_init_hook {
 
             let detour;
             if hook.is_some() {
+                event!(
+                    Level::INFO,
+                    "Use your hook(at {:x}) for {}",
+                    hook.unwrap() as usize,
+                    $func_symbol
+                );
                 detour = unsafe { GenericDetour::<$target_func_type>::new(target, hook.unwrap()) }?;
             } else {
+                event!(Level::INFO, "Use default hook for {}", $func_symbol);
                 detour = unsafe { GenericDetour::<$target_func_type>::new(target, $hook_func) }?;
             }
             unsafe { detour.enable()? };
