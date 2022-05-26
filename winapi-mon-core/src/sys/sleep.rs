@@ -14,7 +14,7 @@ use winapi::um::winnt::{HANDLE, LPCSTR, LPSTR, VOID};
 
 //only Sleep is implemented, not Ex
 
-type FnSleep = extern "system" fn(DWORD) -> VOID;
+type FnSleep = extern "system" fn(DWORD);
 static SleepDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnSleep>>>> = SyncOnceCell::new();
 
 declare_init_hook!(
@@ -26,7 +26,7 @@ declare_init_hook!(
     __hook__Sleep
 );
 
-extern "system" fn __hook__Sleep(dwMilliseconds: DWORD) -> VOID {
+extern "system" fn __hook__Sleep(dwMilliseconds: DWORD) {
     event!(
         Level::INFO,
         "[{}] {:?} msecs.",
