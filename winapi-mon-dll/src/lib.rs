@@ -32,7 +32,7 @@ fn attached_main() -> anyhow::Result<()> {
     winapi_mon_core::fs::hook_GetFinalPathNameByHandleA(None)?;
     winapi_mon_core::memory::hook_LoadLibraryA(None)?;
     winapi_mon_core::fs::hook_CreateFileA(None)?;
-    // winapi_mon_core::sys::hook_Sleep(None)?; //provide Some(hook) to use your own hook function
+    winapi_mon_core::sys::hook_Sleep(None)?; //provide Some(hook) to use your own hook function
 
     event!(Level::INFO, "Initialized the logger!");
 
