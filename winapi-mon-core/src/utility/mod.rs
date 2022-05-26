@@ -16,7 +16,9 @@ use winapi::um::winnt::{HANDLE, LPCSTR, LPSTR};
 #[macro_export]
 macro_rules! declare_init_hook {
     ($func_name:ident,$target_func_type:ty, $sync_once_cell_detour:expr,$module_name:expr,$func_symbol:expr,$hook_func:expr) => {
-        pub fn $func_name() -> Result<Arc<RwLock<GenericDetour<$target_func_type>>>> {
+        pub fn $func_name(
+            hook: Option<$target_func_type>,
+        ) -> Result<Arc<RwLock<GenericDetour<$target_func_type>>>> {
             use crate::utility::get_module_proc_address;
             event!(
                 Level::INFO,
@@ -38,7 +40,19 @@ macro_rules! declare_init_hook {
 
             let target: $target_func_type = unsafe { std::mem::transmute(address) };
 
-            let detour = unsafe { GenericDetour::<$target_func_type>::new(target, $hook_func) }?;
+            let detour;
+            if hook.is_some() {
+                event!(
+                    Level::INFO,
+                    "Use your hook(at {:x}) for {}",
+                    hook.unwrap() as usize,
+                    $func_symbol
+                );
+                detour = unsafe { GenericDetour::<$target_func_type>::new(target, hook.unwrap()) }?;
+            } else {
+                event!(Level::INFO, "Use default hook for {}", $func_symbol);
+                detour = unsafe { GenericDetour::<$target_func_type>::new(target, $hook_func) }?;
+            }
             unsafe { detour.enable()? };
 
             let detour = Arc::new(RwLock::new(detour));

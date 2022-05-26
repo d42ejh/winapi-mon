@@ -1,2 +1,5 @@
-# winapi-mon
-Winapi logger for dll hacks.  
+# winapi-mon-core
+Core library.  
+
+# winapi-mon-dll
+Sample dll.  
