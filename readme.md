@@ -3,6 +3,3 @@ Core library.
 
 # winapi-mon-dll
 Sample dll.  
-
-
-
