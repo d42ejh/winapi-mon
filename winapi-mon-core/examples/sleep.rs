@@ -25,6 +25,8 @@ fn main() {
             unsafe { Sleep(77) };
         }
     });
+    unsafe { Sleep(10000) };
     let h = hook_Sleep(None).unwrap();
+    unsafe { h.read().unwrap().enable() };
     unsafe { Sleep(10000) };
 }
