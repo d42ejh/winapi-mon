@@ -27,7 +27,6 @@ declare_init_hook!(
     __hook__VirtualProtect
 );
 
-
 /*
 //old codes, todo remove this if new code is fine.
 pub fn hook_VirtualProtect() -> Result<()> {

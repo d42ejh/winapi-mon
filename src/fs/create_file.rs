@@ -6,7 +6,10 @@ use std::lazy::SyncOnceCell;
 use std::sync::{Arc, RwLock};
 use tracing::{event, Level};
 use winapi::shared::minwindef::{BOOL, DWORD, FALSE, HINSTANCE, LPDWORD, LPVOID, TRUE};
-use winapi::um::fileapi::{CreateFileA, CreateFileW};
+use winapi::um::fileapi::{
+    CreateFileA, CreateFileW, CREATE_ALWAYS, CREATE_NEW, OPEN_ALWAYS, OPEN_EXISTING,
+    TRUNCATE_EXISTING,
+};
 use winapi::um::minwinbase::{LPOVERLAPPED, LPSECURITY_ATTRIBUTES};
 use winapi::um::winnt::{HANDLE, LPCSTR};
 
@@ -36,12 +39,40 @@ pub extern "system" fn __hook__CreateFileA(
 ) -> HANDLE {
     let file_name = unsafe { std::ffi::CStr::from_ptr(lpFileName) };
 
+    let creation_disposition = match dwCreationDisposition {
+        CREATE_ALWAYS => {
+            name_of!(CREATE_ALWAYS)
+        }
+        CREATE_NEW => {
+            name_of!(CREATE_NEW)
+        }
+        OPEN_ALWAYS => {
+            name_of!(OPEN_ALWAYS)
+        }
+        OPEN_EXISTING => {
+            name_of!(OPEN_EXISTING)
+        }
+        TRUNCATE_EXISTING => {
+            name_of!(TRUNCATE_EXISTING)
+        }
+        _ => "Unknown",
+    };
+
+    // https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea
+    //todo,  maybe need to do '&' one by one
+    let flags_and_atributes = match dwFlagsAndAttributes {
+        __ => "Unknown",
+    };
     event!(
         Level::INFO,
-        "[{}] {} {:?}",
+        "[{}] {} {:?}, {} {}, {} {}",
         name_of!(CreateFileA),
         name_of!(lpFileName),
         file_name,
+        name_of!(dwCreationDisposition),
+        creation_disposition,
+        name_of!(dwFlagsAndAttributes),
+        flags_and_atributes
     );
 
     // call trampoline
