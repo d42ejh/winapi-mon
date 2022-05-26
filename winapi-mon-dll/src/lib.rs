@@ -17,9 +17,9 @@ fn attached_main() -> anyhow::Result<()> {
     unsafe { AllocConsole() };
     ansi_term::enable_ansi_support().unwrap();
 
-   // let file_appender = tracing_appender::rolling::never("tmp", "winapi-mon.log"); //uncommnet this to use file log
+    // let file_appender = tracing_appender::rolling::never("tmp", "winapi-mon.log"); //uncommnet this to use file log
     tracing_subscriber::fmt()
-    //    .with_writer(file_appender) //uncommnet this to use file log
+        //    .with_writer(file_appender) //uncommnet this to use file log
         .pretty()
         .with_thread_ids(true)
         .with_thread_names(true)
@@ -32,7 +32,7 @@ fn attached_main() -> anyhow::Result<()> {
     winapi_mon_core::fs::hook_GetFinalPathNameByHandleA(None)?;
     winapi_mon_core::memory::hook_LoadLibraryA(None)?;
     winapi_mon_core::fs::hook_CreateFileA(None)?;
-   // winapi_mon_core::sys::hook_Sleep(None)?; //provide Some(hook) to use your own hook function
+    // winapi_mon_core::sys::hook_Sleep(None)?; //provide Some(hook) to use your own hook function
 
     event!(Level::INFO, "Initialized the logger!");
 
