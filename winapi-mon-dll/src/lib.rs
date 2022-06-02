@@ -17,24 +17,45 @@ fn attached_main() -> anyhow::Result<()> {
     unsafe { AllocConsole() };
     ansi_term::enable_ansi_support().unwrap();
 
-    // let file_appender = tracing_appender::rolling::never("tmp", "winapi-mon.log"); //uncommnet this to use file log
+    // let file_appender = tracing_appender::rolling::never("log", "winapi-mon.log"); //uncommnet this to use file log
     tracing_subscriber::fmt()
         //    .with_writer(file_appender) //uncommnet this to use file log
         .pretty()
         .with_thread_ids(true)
         .with_thread_names(true)
-        // enable everything
         .with_max_level(tracing::Level::TRACE)
-        // sets this to be the default, global collector for this application.
         .init();
 
-    winapi_mon_core::fs::hook_ReadFile(None)?;
-    winapi_mon_core::fs::hook_GetFinalPathNameByHandleA(None)?;
-    winapi_mon_core::memory::hook_LoadLibraryA(None)?;
-    winapi_mon_core::fs::hook_CreateFileA(None)?;
-    winapi_mon_core::sys::hook_Sleep(None)?; //provide Some(hook) to use your own hook function
-
     event!(Level::INFO, "Initialized the logger!");
+
+    let detour = winapi_mon_core::fileapi::hook_ReadFile(None)?;
+    let detour = detour.write().unwrap();
+    unsafe { detour.enable() }?;
+
+    let detour = winapi_mon_core::fileapi::hook_GetFinalPathNameByHandleA(None)?;
+    let detour = detour.write().unwrap();
+    unsafe { detour.enable() }?;
+
+    let detour = winapi_mon_core::libloaderapi::hook_LoadLibraryA(None)?;
+    let detour = detour.write().unwrap();
+    unsafe { detour.enable() }?;
+
+    let detour = winapi_mon_core::libloaderapi::hook_LoadLibraryW(None)?;
+    let detour = detour.write().unwrap();
+    unsafe { detour.enable() }?;
+
+    let detour = winapi_mon_core::libloaderapi::hook_GetProcAddress(None)?;
+    let detour = detour.write().unwrap();
+    unsafe { detour.enable() }?;
+
+    let detour = winapi_mon_core::fileapi::hook_CreateFileA(None)?;
+    let detour = detour.write().unwrap();
+    unsafe { detour.enable() }?;
+
+    //let d = winapi_mon_core::synchapi::hook_Sleep(None)?; //provide Some(hook) to use your own hook function
+    // winapi_mon_core::memoryapi::hook_VirtualProtect(None)?;
+
+    event!(Level::INFO, "All Done");
 
     Ok(())
 }

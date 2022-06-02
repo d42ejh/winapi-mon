@@ -1,4 +1,4 @@
+mod get_proc_address;
 mod load_library;
-mod virtual_protect;
+pub use get_proc_address::hook_GetProcAddress;
 pub use load_library::{hook_LoadLibraryA, hook_LoadLibraryW};
-pub use virtual_protect::hook_VirtualProtect;
