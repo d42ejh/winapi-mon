@@ -6,6 +6,5 @@ pub mod fileapi;
 pub mod libloaderapi;
 pub mod memoryapi;
 pub mod synchapi;
-mod utility;
+pub mod utility;
 pub mod winuser;
-pub use utility::return_address;
