@@ -10,14 +10,17 @@ use winapi::um::libloaderapi::{GetModuleHandleW, GetProcAddress};
 use winapi::um::memoryapi::VirtualProtect;
 use winapi::um::minwinbase::LPOVERLAPPED;
 use winapi::um::winnt::{HANDLE, LPCSTR, LPSTR};
-
+pub mod msg;
 //https://doc.rust-lang.org/book/ch19-06-macros.html
 
 #[macro_export]
 macro_rules! declare_init_hook {
     ($func_name:ident,$target_func_type:ty, $sync_once_cell_detour:expr,$module_name:expr,$func_symbol:expr,$hook_func:expr) => {
+        /// hook: Optional hook. You can overwrite default hook by providing Some(your_hook)
+        /// enable: If true, enables hook right after the hooking.
         pub fn $func_name(
             hook: Option<$target_func_type>,
+            enable: bool,
         ) -> Result<Arc<RwLock<GenericDetour<$target_func_type>>>> {
             use crate::utility::get_module_proc_address;
             event!(
@@ -54,6 +57,10 @@ macro_rules! declare_init_hook {
                 detour = unsafe { GenericDetour::<$target_func_type>::new(target, $hook_func) }?;
             }
 
+            if enable {
+                unsafe { detour.enable() }?;
+            }
+
             let detour = Arc::new(RwLock::new(detour));
 
             let set_result = $sync_once_cell_detour.set(detour.clone());
@@ -63,7 +70,7 @@ macro_rules! declare_init_hook {
             }
             assert!($sync_once_cell_detour.get().is_some()); //must
 
-            event!(Level::INFO, "Hooked...");
+            event!(Level::INFO, "Hooked {}", $func_symbol);
             Ok(detour)
         }
     };
@@ -75,7 +82,7 @@ macro_rules! get_detour {
         match &$detour_sync_once_cell.get() {
             Some(detour) => detour.read().unwrap(),
             None => {
-                event!(Level::ERROR, "Should not happen");
+                tracing::event!(tracing::Level::ERROR, "Should not happen");
                 unreachable!()
             }
         }
@@ -115,4 +122,18 @@ fn get_module_handle(module: &str) -> Result<HINSTANCE> {
         )));
     }
     Ok(handle)
+}
+
+// https://stackoverflow.com/questions/54999851/how-do-i-get-the-return-address-of-a-function
+// LLVM llvm.returnaddress: https://releases.llvm.org/2.6/docs/LangRef.html#int_returnaddress
+extern "C" {
+    #[link_name = "llvm.returnaddress"]
+    pub fn return_address(a: i32) -> *const u8;
+}
+
+#[macro_export]
+macro_rules! caller_address {
+    () => {
+        unsafe { return_address(0) }
+    };
 }

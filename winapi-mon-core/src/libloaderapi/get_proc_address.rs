@@ -21,7 +21,7 @@ use winapi::um::winnt::{LPCSTR, LPCWSTR};
 
 type FnGetProcAddress = extern "system" fn(HMODULE, LPCSTR) -> FARPROC;
 
-static GetProcAddressDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnGetProcAddress>>>> =
+pub static GetProcAddressDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnGetProcAddress>>>> =
     SyncOnceCell::new();
 
 declare_init_hook!(

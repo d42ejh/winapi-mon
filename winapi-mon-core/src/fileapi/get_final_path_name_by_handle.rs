@@ -20,7 +20,7 @@ DWORD GetFinalPathNameByHandleA(
 /// https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfinalpathnamebyhandlea
 type FnGetFinalPathNameByHandleA = extern "system" fn(HANDLE, LPSTR, DWORD, DWORD) -> DWORD;
 
-static GetFinalPathNameByHandleADetour: SyncOnceCell<
+pub static GetFinalPathNameByHandleADetour: SyncOnceCell<
     Arc<RwLock<GenericDetour<FnGetFinalPathNameByHandleA>>>,
 > = SyncOnceCell::new();
 

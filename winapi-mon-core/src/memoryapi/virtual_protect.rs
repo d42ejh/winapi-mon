@@ -15,7 +15,7 @@ type FnVirtualProtect = extern "system" fn(LPVOID, SIZE_T, DWORD, PDWORD) -> BOO
 
 //new codes
 // somehow VirtualProtect with SyncOnceCell cause wierd panic(possibly because of anti cheat shit).
-static VirtualProtectDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnVirtualProtect>>>> =
+pub static VirtualProtectDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnVirtualProtect>>>> =
     SyncOnceCell::new();
 
 declare_init_hook!(

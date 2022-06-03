@@ -1,5 +1,9 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
+
+use winapi_mon_core::{caller_address, return_address};
+
+use std::arch::asm;
 use tracing::{event, Level};
 use winapi::{
     shared::minwindef::{
@@ -12,6 +16,31 @@ use winapi::{
     um::wincon::FreeConsole,
     um::winnt::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH},
 };
+
+// Example custom hook
+// https://stackoverflow.com/questions/57621889/getting-the-callers-return-address
+extern "system" fn __hook__Sleep(dwMilliseconds: DWORD) {
+    // read the eax register for the sake of example
+    // Rust inline assembly: https://rust-lang.github.io/rfcs/2873-inline-asm.html
+
+    let mut eax_val: usize = 0;
+    /*
+    unsafe {
+        asm! {
+            "mov {}, eax",
+        out(reg) eax_val
+        }
+    }
+    */
+
+    event!(
+        Level::WARN,
+        "I do not sleep({}) caller: {:p} eax: {:x}",
+        dwMilliseconds,
+        caller_address!(), //get return address(caller) you can mess with inline assembly if you want
+        eax_val
+    );
+}
 
 fn attached_main() -> anyhow::Result<()> {
     unsafe { AllocConsole() };
@@ -28,32 +57,25 @@ fn attached_main() -> anyhow::Result<()> {
 
     event!(Level::INFO, "Initialized the logger!");
 
-    let detour = winapi_mon_core::fileapi::hook_ReadFile(None)?;
+    winapi_mon_core::fileapi::hook_ReadFile(None, true)?;
+
+    winapi_mon_core::fileapi::hook_GetFinalPathNameByHandleA(None, true)?;
+
+    winapi_mon_core::libloaderapi::hook_LoadLibraryA(None, true)?;
+
+    winapi_mon_core::libloaderapi::hook_LoadLibraryW(None, true)?;
+
+    winapi_mon_core::libloaderapi::hook_GetProcAddress(None, true)?;
+
+    let detour = winapi_mon_core::fileapi::hook_CreateFileA(None, false)?;
+
+    //You can enable the hook later
     let detour = detour.write().unwrap();
     unsafe { detour.enable() }?;
 
-    let detour = winapi_mon_core::fileapi::hook_GetFinalPathNameByHandleA(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
-
-    let detour = winapi_mon_core::libloaderapi::hook_LoadLibraryA(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
-
-    let detour = winapi_mon_core::libloaderapi::hook_LoadLibraryW(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
-
-    let detour = winapi_mon_core::libloaderapi::hook_GetProcAddress(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
-
-    let detour = winapi_mon_core::fileapi::hook_CreateFileA(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
-
-    //let d = winapi_mon_core::synchapi::hook_Sleep(None)?; //provide Some(hook) to use your own hook function
-    // winapi_mon_core::memoryapi::hook_VirtualProtect(None)?;
+    //Custom Hook
+    //provide Some(your_hook) to use your own hook function
+    winapi_mon_core::synchapi::hook_Sleep(Some(__hook__Sleep), true)?;
 
     event!(Level::INFO, "All Done");
 

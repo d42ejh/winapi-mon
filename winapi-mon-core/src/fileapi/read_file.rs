@@ -11,7 +11,8 @@ use winapi::um::minwinbase::LPOVERLAPPED;
 use winapi::um::winnt::HANDLE;
 type FnReadFile = extern "system" fn(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED) -> BOOL;
 
-static ReadFileDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnReadFile>>>> = SyncOnceCell::new();
+pub static ReadFileDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnReadFile>>>> =
+    SyncOnceCell::new();
 declare_init_hook!(
     hook_ReadFile,
     FnReadFile,
