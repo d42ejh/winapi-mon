@@ -26,6 +26,6 @@ fn main() {
         }
     });
     unsafe { Sleep(10000) };
-    let h = hook_Sleep(None,true).unwrap();
+    let h = hook_Sleep(None, true).unwrap();
     unsafe { Sleep(10000) };
 }

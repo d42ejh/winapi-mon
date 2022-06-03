@@ -1,5 +1,9 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
+
+use winapi_mon_core::{caller_address, return_address};
+
+use std::arch::asm;
 use tracing::{event, Level};
 use winapi::{
     shared::minwindef::{
@@ -13,9 +17,29 @@ use winapi::{
     um::winnt::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH},
 };
 
-/// Custom hook
+// Example custom hook
+// https://stackoverflow.com/questions/57621889/getting-the-callers-return-address
 extern "system" fn __hook__Sleep(dwMilliseconds: DWORD) {
-    event!(Level::WARN, "I do not sleep({})", dwMilliseconds);
+    // read the eax register for the sake of example
+    // Rust inline assembly: https://rust-lang.github.io/rfcs/2873-inline-asm.html
+
+    let mut eax_val: usize = 0;
+    /*
+    unsafe {
+        asm! {
+            "mov {}, eax",
+        out(reg) eax_val
+        }
+    }
+    */
+
+    event!(
+        Level::WARN,
+        "I do not sleep({}) caller: {:p} eax: {:x}",
+        dwMilliseconds,
+        caller_address!(), //get return address(caller) you can mess with inline assembly if you want
+        eax_val
+    );
 }
 
 fn attached_main() -> anyhow::Result<()> {
@@ -49,7 +73,9 @@ fn attached_main() -> anyhow::Result<()> {
     let detour = detour.write().unwrap();
     unsafe { detour.enable() }?;
 
-    winapi_mon_core::synchapi::hook_Sleep(Some(__hook__Sleep), true)?; //provide Some(your_hook) to use your own hook function
+    //Custom Hook
+    //provide Some(your_hook) to use your own hook function
+    winapi_mon_core::synchapi::hook_Sleep(Some(__hook__Sleep), true)?;
 
     event!(Level::INFO, "All Done");
 
