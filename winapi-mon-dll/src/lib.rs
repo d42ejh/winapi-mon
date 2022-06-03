@@ -13,6 +13,11 @@ use winapi::{
     um::winnt::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH},
 };
 
+/// Custom hook
+extern "system" fn __hook__Sleep(dwMilliseconds: DWORD) {
+    event!(Level::WARN, "I do not sleep({})", dwMilliseconds);
+}
+
 fn attached_main() -> anyhow::Result<()> {
     unsafe { AllocConsole() };
     ansi_term::enable_ansi_support().unwrap();
@@ -44,8 +49,7 @@ fn attached_main() -> anyhow::Result<()> {
     let detour = detour.write().unwrap();
     unsafe { detour.enable() }?;
 
-    //let d = winapi_mon_core::synchapi::hook_Sleep(None)?; //provide Some(hook) to use your own hook function
-    // winapi_mon_core::memoryapi::hook_VirtualProtect(None)?;
+    winapi_mon_core::synchapi::hook_Sleep(Some(__hook__Sleep), true)?; //provide Some(your_hook) to use your own hook function
 
     event!(Level::INFO, "All Done");
 
