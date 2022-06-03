@@ -28,27 +28,19 @@ fn attached_main() -> anyhow::Result<()> {
 
     event!(Level::INFO, "Initialized the logger!");
 
-    let detour = winapi_mon_core::fileapi::hook_ReadFile(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
+    winapi_mon_core::fileapi::hook_ReadFile(None, true)?;
 
-    let detour = winapi_mon_core::fileapi::hook_GetFinalPathNameByHandleA(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
+    winapi_mon_core::fileapi::hook_GetFinalPathNameByHandleA(None, true)?;
 
-    let detour = winapi_mon_core::libloaderapi::hook_LoadLibraryA(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
+    winapi_mon_core::libloaderapi::hook_LoadLibraryA(None, true)?;
 
-    let detour = winapi_mon_core::libloaderapi::hook_LoadLibraryW(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
+    winapi_mon_core::libloaderapi::hook_LoadLibraryW(None, true)?;
 
-    let detour = winapi_mon_core::libloaderapi::hook_GetProcAddress(None)?;
-    let detour = detour.write().unwrap();
-    unsafe { detour.enable() }?;
+    winapi_mon_core::libloaderapi::hook_GetProcAddress(None, true)?;
 
-    let detour = winapi_mon_core::fileapi::hook_CreateFileA(None)?;
+    let detour = winapi_mon_core::fileapi::hook_CreateFileA(None, false)?;
+
+    //You can enable the hook later
     let detour = detour.write().unwrap();
     unsafe { detour.enable() }?;
 

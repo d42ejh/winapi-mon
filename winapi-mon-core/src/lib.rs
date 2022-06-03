@@ -6,3 +6,4 @@ pub mod libloaderapi;
 pub mod memoryapi;
 pub mod synchapi;
 mod utility;
+pub mod winuser;

@@ -20,9 +20,9 @@ use winapi::um::winnt::{LPCSTR, LPCWSTR};
 type FnLoadLibraryA = extern "system" fn(LPCSTR) -> HMODULE;
 type FnLoadLibraryW = extern "system" fn(LPCWSTR) -> HMODULE;
 
-static LoadLibraryADetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnLoadLibraryA>>>> =
+pub static LoadLibraryADetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnLoadLibraryA>>>> =
     SyncOnceCell::new();
-static LoadLibraryWDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnLoadLibraryW>>>> =
+pub static LoadLibraryWDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnLoadLibraryW>>>> =
     SyncOnceCell::new();
 
 declare_init_hook!(

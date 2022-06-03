@@ -16,7 +16,7 @@ use winapi::um::winnt::{HANDLE, LPCSTR};
 type FnCreateFileA =
     extern "system" fn(LPCSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE) -> HANDLE;
 
-static CreateFileADetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnCreateFileA>>>> =
+pub static CreateFileADetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnCreateFileA>>>> =
     SyncOnceCell::new();
 
 declare_init_hook!(
