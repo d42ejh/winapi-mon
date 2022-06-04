@@ -86,7 +86,7 @@ extern "system" fn __hook__PeekMessageA(
     let detour = get_detour!(PeekMessageADetour);
 
     // Call trampoline
-    let return_val = unsafe { f.call(lpMsg, hWnd, wMsgFilterMin, wMsgFileterMax, wRemoveMsg) };
+    let return_val = unsafe { detour.call(lpMsg, hWnd, wMsgFilterMin, wMsgFileterMax, wRemoveMsg) };
 
     // Profit here.
     let ret_address=caller_address!();
