@@ -1,6 +1,10 @@
 # winapi-mon
 Monitor winapi functions by injecting dll.  
 
+Please use at your own risk.  
+I cannot guarantee anything.  
+Only few hooks are available for now.  
+
 # winapi-mon-core
 Core library.  
 
@@ -9,6 +13,7 @@ Sample dll.
 
 # Usage
 Please forget about the unwrap() s.  
+
 ## Log winapi function with tracing library.
 ```Rust
 // import 
@@ -178,3 +183,4 @@ TODO!
 
 # TODO
 - [ ] Eliminate the compiler warnings. 
+- [ ] Complete the readme.
