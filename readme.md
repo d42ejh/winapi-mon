@@ -121,5 +121,60 @@ fn your_main_function(){
 Implement new hook is easy. (and lazy)  
 Here's how to do it.  
 
-## Step 1
-todo
+For the example sake, i'll implement [CreateThread](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread) hook.  
+  
+
+## [Step 1] Research about the target function.  
+
+[CreateThread(microsoft doc)](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread)  
+
+The function definition is.  
+
+```C++
+HANDLE CreateThread(
+    LPSECURITY_ATTRIBUTES   lpThreadAttributes,
+    SIZE_T                  dwStackSize,
+    LPTHREAD_START_ROUTINE  lpStartAddress,
+    LPVOID lpParameter,
+    DWORD                   dwCreationFlags,
+    LPDWORD                 lpThreadId
+);
+```
+
+So our hook's type is
+```Rust
+type FnCreateThread = extern "system" fn(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD) -> HANDLE;  
+```
+  
+If your are not sure about what is extern "system", please refer https://doc.rust-lang.org/nomicon/ffi.html#foreign-calling-conventions  
+
+Addition: [stdcall(microsoft doc)](https://docs.microsoft.com/en-us/cpp/cpp/stdcall)  
+
+## [Step 2] Prepare source files.
+
+Check the document([CreateThread](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread)) and see in which header file the function is defined.  
+In this case the fuction is defined in 'processthreadsapi.h'.
+
+Check if there is a folder with the header file name in winapi-mon-core/src . (In this case 'processthreadsapi')  
+
+If there is no such folder, please create a folder and mod.rs in it.
+Then include created module by adding it in 'winapi-mon-core/src/lib.rs'.
+
+In the folder create TargetFunctionName.rs (so CreateThread.rs). (At the time of writing, I use snake_case for source file names. I will replace all source file names with CamelCase later.)  
+
+Add the created module(CreateThread) to mod.rs.
+```Rust
+mod CreateThread;
+```
+
+## [Step 3] Write a default hook.
+In the created source file. (CreateThread.rs)  
+
+We need to write a hook first.  
+
+TODO!
+
+
+
+# TODO
+- [ ] Eliminate the compiler warnings. 

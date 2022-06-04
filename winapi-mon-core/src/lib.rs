@@ -8,3 +8,4 @@ pub mod memoryapi;
 pub mod synchapi;
 pub mod utility;
 pub mod winuser;
+pub mod processthreadsapi;
