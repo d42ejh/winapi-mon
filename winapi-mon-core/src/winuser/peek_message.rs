@@ -1,4 +1,4 @@
-use crate::{declare_init_hook, get_detour, utility::msg::MSG_to_string};
+use crate::{declare_init_hook, get_detour, utility::MSG_to_string};
 use anyhow::Result;
 use detour::{static_detour, Error, GenericDetour, RawDetour, StaticDetour};
 use nameof::name_of;

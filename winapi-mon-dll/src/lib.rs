@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
-use winapi_mon_core::{caller_address, return_address};
+use winapi_mon_core::{caller_address, utility::return_address};
 
 use std::arch::asm;
 use tracing::{event, Level};

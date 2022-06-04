@@ -10,7 +10,8 @@ use winapi::um::libloaderapi::{GetModuleHandleW, GetProcAddress};
 use winapi::um::memoryapi::VirtualProtect;
 use winapi::um::minwinbase::LPOVERLAPPED;
 use winapi::um::winnt::{HANDLE, LPCSTR, LPSTR};
-pub mod msg;
+mod msg;
+pub use msg::MSG_to_string;
 //https://doc.rust-lang.org/book/ch19-06-macros.html
 
 #[macro_export]
