@@ -339,7 +339,7 @@ declare_init_hook!(
 );
 ```
 
-Here's a full code [CreateThread.rs]().
+Here's full code [CreateThread.rs](https://github.com/d42ejh/winapi-mon/blob/main/winapi-mon-core/src/processthreadsapi/CreateThread.rs).
 
 ### [Optional: Step 6] Open pull request
 Format the codes by doing  
