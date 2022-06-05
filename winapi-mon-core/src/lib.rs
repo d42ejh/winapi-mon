@@ -5,7 +5,7 @@
 pub mod fileapi;
 pub mod libloaderapi;
 pub mod memoryapi;
+pub mod processthreadsapi;
 pub mod synchapi;
 pub mod utility;
 pub mod winuser;
-pub mod processthreadsapi;

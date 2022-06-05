@@ -22,7 +22,7 @@ macro_rules! declare_init_hook {
         pub fn $func_name(
             hook: Option<$target_func_type>,
             enable: bool,
-        ) -> Result<Arc<RwLock<GenericDetour<$target_func_type>>>> {
+        ) -> anyhow::Result<Arc<RwLock<GenericDetour<$target_func_type>>>> {
             use crate::utility::get_module_proc_address;
             event!(
                 Level::INFO,
