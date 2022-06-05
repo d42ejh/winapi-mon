@@ -172,12 +172,23 @@ Add the created module(CreateThread) to mod.rs.
 mod CreateThread;
 ```
 
-## [Step 3] Write a default hook.
+## [Step 3] Write default hook.
 In the created source file. (CreateThread.rs)  
 
-We need to write a hook first.  
+We need to write hook first.  
+We have already learned the function definition in [Step 1].  
 
-TODO!
+
+So just define function as is.  
+
+```Rust
+extern "system" fn __hook__CreateThread(lpThreadAttributes:LPSECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress:LPTHREAD_START_ROUTINE, lpParameter: LPVOID, dwCreationFlags: DWORD, lpThreadId: LPDWORD) -> HANDLE {
+
+}
+```
+
+
+
 
 
 
