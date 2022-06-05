@@ -172,7 +172,11 @@ Add the created module(CreateThread) to mod.rs.
 mod CreateThread;
 ```
 
-## [Step 3] Write default hook.
+## [Step 3] Define type and declare detour SyncOnceCell
+```Rust
+```
+
+## [Step 4] Write default hook.
 In the created source file. (CreateThread.rs)  
 
 We need to write hook first.  
@@ -299,11 +303,27 @@ extern "system" fn __hook__CreateThread(lpThreadAttributes:LPSECURITY_ATTRIBUTES
 }
 ```
 
-## [Step 4] Declare hook initialization function.
+## [Step 5] Declare hook initialization function.
 
 Use convenience macro to declare initialization function.  
 
-todo
+```Rust
+use ...
+...
+
+...
+use crate::{declare_init_hook};
+
+
+declare_init_hook!(
+    hook_CreateThread, // Hook initialization function's name
+    FnCreateThread, // Target function's type
+    CreateThreadDetour, // detour SyncOnceCell
+    "kernel32", // dll name which the target function belongs
+    name_of!(CreateThread), // name of the target function
+    __hook__CreateThread // default hook
+);
+```
 
 
 
