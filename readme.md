@@ -173,7 +173,21 @@ mod CreateThread;
 ```
 
 ## [Step 3] Define type and declare detour SyncOnceCell
+In the CreateThread.rs 
+
 ```Rust
+use winapi:: ...
+use detour::GenericDetour;
+use std::lazy::SyncOnceCell;
+use std::sync::{Arc, RwLock};
+
+//define type
+type FnCreateThread = extern "system" fn(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD) -> HANDLE;
+
+//declare detour SyncOnceCell
+pub static CreateThreadDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnCreateThread>>>> =
+    SyncOnceCell::new();
+
 ```
 
 ## [Step 4] Write default hook.
@@ -317,13 +331,27 @@ use crate::{declare_init_hook};
 
 declare_init_hook!(
     hook_CreateThread, // Hook initialization function's name
-    FnCreateThread, // Target function's type
-    CreateThreadDetour, // detour SyncOnceCell
+    FnCreateThread, // Target function's type (defined in [Step 3])
+    CreateThreadDetour, // detour SyncOnceCell (defined in [Step 3])
     "kernel32", // dll name which the target function belongs
     name_of!(CreateThread), // name of the target function
-    __hook__CreateThread // default hook
+    __hook__CreateThread // default hook (declared in [Step 4])
 );
 ```
+
+Here's a full code [CreateThread.rs]().
+
+## [Step 6] Open pull request
+Format the codes by doing  
+cargo fmt  
+
+Build and test.  
+
+If it seems fine, please consider opening pull request and contribute.  
+
+Please don't forget to fetch latest updates to your folk before commiting.  
+
+
 
 
 
