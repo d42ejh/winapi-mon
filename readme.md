@@ -341,7 +341,7 @@ declare_init_hook!(
 
 Here's a full code [CreateThread.rs]().
 
-## [Step 6] Open pull request
+## [Optional: Step 6] Open pull request
 Format the codes by doing  
 cargo fmt  
 
