@@ -172,12 +172,186 @@ Add the created module(CreateThread) to mod.rs.
 mod CreateThread;
 ```
 
-## [Step 3] Write a default hook.
+## [Step 3] Define type and declare detour SyncOnceCell
+In the CreateThread.rs 
+
+```Rust
+use winapi:: ...
+use detour::GenericDetour;
+use std::lazy::SyncOnceCell;
+use std::sync::{Arc, RwLock};
+
+//define type
+type FnCreateThread = extern "system" fn(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD) -> HANDLE;
+
+//declare detour SyncOnceCell
+pub static CreateThreadDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnCreateThread>>>> =
+    SyncOnceCell::new();
+
+```
+
+## [Step 4] Write default hook.
 In the created source file. (CreateThread.rs)  
 
-We need to write a hook first.  
+We need to write hook first.  
+We have already learned the function signature in [Step 1].  
+  
 
-TODO!
+```Rust
+use winapi::{
+    shared::{
+        basetsd::SIZE_T,
+        minwindef::{DWORD, LPDWORD, LPVOID},
+    },
+    um::{
+        minwinbase::{LPSECURITY_ATTRIBUTES, LPTHREAD_START_ROUTINE},
+        winnt::HANDLE, processthreadsapi::CreateThread,
+    },
+};
+
+extern "system" fn __hook__CreateThread(lpThreadAttributes:LPSECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress:LPTHREAD_START_ROUTINE, lpParameter: LPVOID, dwCreationFlags: DWORD, lpThreadId: LPDWORD) -> HANDLE {
+
+}
+```
+
+We need to call trampoline to do what the target function is supposed to do.  
+This would be the desired hook behavior in most cases.  
+If user do not want this behavior, they can use their own hook as i described above.  
+
+
+```Rust
+use ...
+...
+
+...
+use crate::get_detour;
+...
+
+...
+extern "system" fn __hook__CreateThread(lpThreadAttributes:LPSECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress:LPTHREAD_START_ROUTINE, lpParameter: LPVOID, dwCreationFlags: DWORD, lpThreadId: LPDWORD) -> HANDLE {
+    //get detour with convenience macro.
+    let detour = get_detour!(CreateThreadDetour);
+
+    //call trampoline first to craate a thread.
+    let ret = unsafe {
+        detour.call(
+            lpThreadAttributes,
+            dwStackSize,
+            lpStartAddress,
+            lpParameter,
+            dwCreationFlags,
+            lpThreadId,
+        )
+    };
+    
+
+    //return the value
+    ret
+}
+```
+
+Finally, add logger like this.  
+Please use name_of! macro to prevent mistakes like typo.  
+
+```Rust
+use ...
+...
+
+...
+use nameof::name_of;
+use tracing::{event, Level};
+use winapi::{
+    um::{
+        processthreadsapi::CreateThread,
+        winbase::CREATE_SUSPENDED,
+    },
+};
+...
+
+...
+extern "system" fn __hook__CreateThread(lpThreadAttributes:LPSECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress:LPTHREAD_START_ROUTINE, lpParameter: LPVOID, dwCreationFlags: DWORD, lpThreadId: LPDWORD) -> HANDLE {
+    ...
+
+    //trampoline stuffs
+
+    ...
+    //called trampoline
+
+
+    let creation_flag = match dwCreationFlags {
+        0 => "0",
+        CREATE_SUSPENDED => name_of!(CREATE_SUSPENDED),
+        0x00010000 => "STACK_SIZE_PARAM_IS_A_RESERVATION", // could not find STACK_SIZE_PARAM_IS_A_RESERVATION in winapi.
+        _ => "Unknown",
+    };
+    //log 
+    event!(
+        Level::INFO,
+        "[{}] {} {}, {} {}, {} {:x}, {} {:x}, {} {}, {} {:p}, returns {:x}",
+        name_of!(CreateThread),
+        name_of!(lpThreadAttributes),
+        "TODO",
+        name_of!(dwStackSize),
+        dwStackSize,
+        name_of!(lpStartAddress),
+        match lpStartAddress {
+            Some(f) => f as usize,
+            None => 0usize,
+        },
+        name_of!(lpParameter),
+        lpParameter as usize,
+        name_of!(dwCreationFlags),
+        creation_flag,
+        name_of!(lpThreadId),
+        lpThreadId,
+        ret as usize
+    );
+
+
+
+    ...
+
+    //return value
+    
+    ...
+}
+```
+
+## [Step 5] Declare hook initialization function.
+
+Use convenience macro to declare initialization function.  
+
+```Rust
+use ...
+...
+
+...
+use crate::{declare_init_hook};
+
+
+declare_init_hook!(
+    hook_CreateThread, // Hook initialization function's name
+    FnCreateThread, // Target function's type (defined in [Step 3])
+    CreateThreadDetour, // detour SyncOnceCell (defined in [Step 3])
+    "kernel32", // dll name which the target function belongs
+    name_of!(CreateThread), // name of the target function
+    __hook__CreateThread // default hook (declared in [Step 4])
+);
+```
+
+Here's a full code [CreateThread.rs]().
+
+## [Optional: Step 6] Open pull request
+Format the codes by doing  
+cargo fmt  
+
+Build and test.  
+
+If it seems fine, please consider opening pull request and contribute.  
+
+Please don't forget to fetch latest updates to your folk before commiting.  
+
+
 
 
 

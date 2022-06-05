@@ -1,7 +1,7 @@
 use tracing::{event, Level};
 use winapi::um::consoleapi::AllocConsole;
 use winapi::um::synchapi::{Sleep, SleepEx};
-use winapi_mon_core::synchapi::{hook_Sleep,SleepDetour};
+use winapi_mon_core::synchapi::{hook_Sleep, SleepDetour};
 
 //Had to write this to identify sleep hook bug.
 fn main() {
