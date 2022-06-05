@@ -129,7 +129,7 @@ Here's how to do it.
 For the example sake, i'll implement [CreateThread](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread) hook.  
   
 
-## [Step 1] Research about the target function.  
+### [Step 1] Research about the target function.  
 
 [CreateThread(microsoft doc)](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread)  
 
@@ -155,7 +155,7 @@ If your are not sure about what is extern "system", please refer https://doc.rus
 
 Addition: [stdcall(microsoft doc)](https://docs.microsoft.com/en-us/cpp/cpp/stdcall)  
 
-## [Step 2] Prepare source files.
+### [Step 2] Prepare source files.
 
 Check the document([CreateThread](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread)) and see in which header file the function is defined.  
 In this case the fuction is defined in 'processthreadsapi.h'.
@@ -172,7 +172,7 @@ Add the created module(CreateThread) to mod.rs.
 mod CreateThread;
 ```
 
-## [Step 3] Define type and declare detour SyncOnceCell
+### [Step 3] Define type and declare detour SyncOnceCell
 In the CreateThread.rs 
 
 ```Rust
@@ -190,7 +190,7 @@ pub static CreateThreadDetour: SyncOnceCell<Arc<RwLock<GenericDetour<FnCreateThr
 
 ```
 
-## [Step 4] Write default hook.
+### [Step 4] Write default hook.
 In the created source file. (CreateThread.rs)  
 
 We need to write hook first.  
@@ -317,7 +317,7 @@ extern "system" fn __hook__CreateThread(lpThreadAttributes:LPSECURITY_ATTRIBUTES
 }
 ```
 
-## [Step 5] Declare hook initialization function.
+### [Step 5] Declare hook initialization function.
 
 Use convenience macro to declare initialization function.  
 
@@ -341,7 +341,7 @@ declare_init_hook!(
 
 Here's a full code [CreateThread.rs]().
 
-## [Optional: Step 6] Open pull request
+### [Optional: Step 6] Open pull request
 Format the codes by doing  
 cargo fmt  
 
