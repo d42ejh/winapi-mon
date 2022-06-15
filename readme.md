@@ -62,6 +62,8 @@ Provide false to not to enable.  (You can manually enable the hook later)
 
 
 ## Use custom hook
+Default hooks only log function arguments with [tracing library](https://github.com/tokio-rs/tracing)  
+If you do not want this behavior, you can provide and use your own hook.  
 ```Rust
 // import 
 use winapi_mon_core::winuser::{hook_PeekMessageA,PeekMessageADetour};
@@ -89,6 +91,7 @@ extern "system" fn __hook__PeekMessageA(
     let return_val = unsafe { detour.call(lpMsg, hWnd, wMsgFilterMin, wMsgFileterMax, wRemoveMsg) };
 
     // Profit here.
+    // One can 'disable' function effects depend on the caller.  
     let ret_address=caller_address!();
     println!("PeekMessageA called! return address: {:p}",ret_address);
 
