@@ -7,15 +7,15 @@ edition = "2021"
 
 [target.'cfg(windows)'.dependencies]
 anyhow = "1.0.56"
-winapi = { version = "0.3.9", features = ["winuser", "minwindef", "libloaderapi", "memoryapi", "consoleapi", "winnt",
+winapi = { version = "0.3.*", features = ["winuser", "minwindef", "libloaderapi", "memoryapi", "consoleapi", "winnt",
   "fileapi", "winbase", "tlhelp32", "handleapi","synchapi", "processthreadsapi", "impl-default", "errhandlingapi", "basetsd", "psapi"] }
 detour = "0.8.1"
 lazy_static = "1.4.0"
 nameof = "1.2.2"
-tracing = "0.1.32"
+tracing = "0.1.*"
 widestring= "0.5.1"
 quote = "1.0.18"
 
 [dev-dependencies]
-tracing-subscriber = "0.3.9"
+tracing-subscriber = "0.3.*"
 ansi_term = "0.12.1"
