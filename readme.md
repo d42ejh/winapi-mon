@@ -91,10 +91,6 @@ extern "system" fn __hook__PeekMessageA(
     let return_val = unsafe { detour.call(lpMsg, hWnd, wMsgFilterMin, wMsgFileterMax, wRemoveMsg) };
 
     // Profit here.
-    // One can 'disable' function effects depend on the caller.  
-    let ret_address=caller_address!();
-    println!("PeekMessageA called! return address: {:p}",ret_address);
-
 
     // Return the value
     return_val
