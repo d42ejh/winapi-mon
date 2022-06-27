@@ -125,16 +125,3 @@ fn get_module_handle(module: &str) -> Result<HINSTANCE> {
     Ok(handle)
 }
 
-// https://stackoverflow.com/questions/54999851/how-do-i-get-the-return-address-of-a-function
-// LLVM llvm.returnaddress: https://releases.llvm.org/2.6/docs/LangRef.html#int_returnaddress
-extern "C" {
-    #[link_name = "llvm.returnaddress"]
-    pub fn return_address(a: i32) -> *const u8;
-}
-
-#[macro_export]
-macro_rules! caller_address {
-    () => {
-        unsafe { return_address(0) }
-    };
-}
